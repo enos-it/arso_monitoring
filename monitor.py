@@ -33,8 +33,8 @@ event = [
 # /vrednostiPrvegaNivoja
 value = [
   {
-    "kompleksInspireId": "string",
-    "merilnoMestoOznaka": "string",
+    "kompleksInspireId": KOMPLEKS_INSPIRE_ID,
+    "merilnoMestoOznaka": MERILNO_MESTO,
     "cas": "2022-03-10T12:15:50",
     "siObraStaNapTehEnoteSimbol": "string",
     "parameterSeznam": [
@@ -52,8 +52,8 @@ value = [
 # /kratkotrajnePovprecneVrednosti
 value_avg = [
   {
-    "kompleksInspireId": "string",
-    "merilnoMestoOznaka": "string",
+    "kompleksInspireId": KOMPLEKS_INSPIRE_ID,
+    "merilnoMestoOznaka": MERILNO_MESTO,
     "zapSt": 0,
     "casMeritve": "2022-03-10T12:15:50",
     "casInterval": 0,
