@@ -1,15 +1,34 @@
 import base64
 import json
+from enum import Enum
 from urllib.parse import urlencode
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-CLIENT_ID = "API_TEL_3686949000"
-CLIENT_SECRET = "Fg3IU0O2crkujkWuPgqpHlL3xAy6LfKP"
-ACCESS_TOKEN_URL = "https://prijava-test.arso.gov.si/auth/realms/arso/protocol/openid-connect/token"
-BASE_URL = "https://ismonitoring-test.arso.gov.si/api/integ"
 
-KOMPLEKS_INSPIRE_ID = "SI.ARSO.000001283.FACILITY" # to je en podatek, index (kompleksInspireId)
-MERILNO_MESTO = "KOTLOVNICA.1.PTK" # to je en podatek, index (merilnoMesto)
+class DogodekPosegSpremembaOznaka(Enum):
+    REDNI_PREGLED = "TM-ESVZ-01"
+    IZREDNI_PREGLED = "TM-ESVZ-02"
+    VZDRZEVANJE = "TM-ESVZ-03"
+    ZAMENJAVA = "TM-ESVZ-04"
+    QAL_2 = "TM-ESVZ-05"
+    AST = "TM-ESVZ-06"
+    SPREMEMBA_KALIBRACIJSKE_FUNKCIJE = "TM-ESVZ-07"
+    SPREMEMBA_PARAMETROV_ZA_VREDNOTENJE = "TM-ESVZ-08"
+    SPREMEMBA_V_PROGRAMSKI_KODI = "TM-ESVZ-09"
+    IZKLOP_DAHS_NAPRAVA_NE_OBRATUJE = "TM-ESVZ-10"
+    IZKLOP_DAHS_NAPRAVA_OBRATUJE = "TM-ESVZ-11"
+    VKLOP_DAHS = "TM-ESVZ-12"
+    DRUGO = "TM-ESVZ-13"
+
+
+CLIENT_ID = "API_TEL_5852498000"
+CLIENT_SECRET = "EX5FL7WE0LHSiFgNiSdA7nXrouCpGmcf"
+ACCESS_TOKEN_URL = "https://prijava-test.arso.gov.si/auth/realms/arso/protocol/openid-connect/token"
+BASE_URL = "https://ismonitoring-test.arso.gov.si/api/integ/v2"
+
+KOMPLEKS_INSPIRE_ID = "SI.ARSO.000113159.FACILITY" # to je en podatek, index (kompleksInspireId)
+MERILNO_MESTO = "MMZ16" # to je en podatek, index (merilnoMesto)
 
 # Telemetrično sporočanje podatkov o dogodkih, posegih in spremembah v AMS in DAHS.
 # /dogodekPosegSprememba
@@ -17,15 +36,15 @@ event = [
   {
     "kompleksInspireId": KOMPLEKS_INSPIRE_ID,
     "merilnoMestoOznaka": MERILNO_MESTO,
-    "datumInCasZacetka": "2026-10-05T12:15:50",
-    "datumInCasKonca": "2026-10-07T12:15:50",
+    "datumInCasZacetka": "2026-10-08T12:15:50",
+    "datumInCasKonca": "2026-10-08T13:15:50",
     "uporabnik": "Enos",
     "modul": "Kotel1",
     "opomba": "Testni dogodek poseg sprememba",
-    "siParameterSifra": "CO2",
-    "siDogodekPosegSpremembaOznaka": "Testni dogodek poseg sprememba 1",
-    "siStatusMeritevSimbol": "HIGH",
-    "siObrStaNapTehEnoteSimbol": "NORM",
+    "siParameterSifra": "PAR_000657",
+    "siDogodekPosegSpremembaOznaka": DogodekPosegSpremembaOznaka.REDNI_PREGLED.value,
+    "siStatusMeritevSimbol": "V",
+    "siObrStaNapTehEnoteSimbol": "SO",
   }
 ]
 
@@ -35,16 +54,9 @@ value = [
   {
     "kompleksInspireId": KOMPLEKS_INSPIRE_ID,
     "merilnoMestoOznaka": MERILNO_MESTO,
-    "cas": "2022-03-10T12:15:50",
-    "siObraStaNapTehEnoteSimbol": "string",
-    "parameterSeznam": [
-      {
-        "siParameterSifra": "string",
-        "siMerskaEnotaSifra": "string",
-        "vrednostFld": 0.1,
-        "siStatusMeritevSimbol": "strin"
-      }
-    ]
+    "cas": "2026-10-13T12:13:50",
+    "siObraStaNapTehEnoteSimbol": "NP",
+    "parameterSeznam": []
   }
 ]
 
@@ -57,11 +69,11 @@ value_avg = [
     "zapSt": 0,
     "casMeritve": "2022-03-10T12:15:50",
     "casInterval": 0,
-    "siObrStaNapTehEnoteSimbol": "string",
+    "siObrStaNapTehEnoteSimbol": "NORM",
     "casObratovanjaNaprave": 0,
     "parameterSeznam": [
       {
-        "siParameterSifra": "string",
+        "siParameterSifra": "PAR_000657",
         "siMerskaEnotaSifra": "string",
         "vrednost": 0.1,
         "vrednostTip": "STA",
@@ -70,7 +82,7 @@ value_avg = [
             "mv": 0.1,
             "siMerskaEnotaSifra": "string",
             "siTipMejeSifra": "string",
-            "siPreseganjeSimbol": "strin"
+            "siPreseganjeSimbol": "string"
           }
         ],
         "pripadaSkupini": "obratovalnoStanjeNaprave"
@@ -100,10 +112,10 @@ def get_access_token():
 	return token_response["access_token"]
 
 
-def get_measurement_sites(change_timestamp="2026-10-07T12:00:00.000"):
+def get_measurement_sites(api="readEvMerilnoMestoSeznam",change_timestamp="2026-10-07T12:00:00.000"):
 	token = get_access_token()
 	url = (
-		f"{BASE_URL}/prenosArsoSifrant/readEvMerilnoMestoSeznam?"
+		f"{BASE_URL}/prenosArsoSifrant/{api}?"
 		f"{urlencode({'changeTimestamp': change_timestamp})}"
 	)
 	request = Request(
@@ -116,10 +128,11 @@ def get_measurement_sites(change_timestamp="2026-10-07T12:00:00.000"):
 		return json.load(response)
 
 
-def send_event(payload=event):
+def send_event(api="dogodekPosegSprememba", payload=event):
+	print(f"Sending event: {json.dumps(payload, indent=2)}")
 	token = get_access_token()
 	request = Request(
-		f"{BASE_URL}/dogodekPosegSprememba",
+		f"{BASE_URL}/api",
 		data=json.dumps(payload).encode("utf-8"),
 		headers={
 			"Authorization": f"Bearer {token}",
@@ -128,15 +141,19 @@ def send_event(payload=event):
 		method="POST",
 	)
 
-	with urlopen(request, timeout=30) as response:
-		body = response.read()
-		return json.loads(body) if body else None
+	try:
+		with urlopen(request, timeout=30) as response:
+			body = response.read()
+			return json.loads(body) if body else None
+	except HTTPError as error:
+		response_body = error.read().decode("utf-8", errors="replace")
+		raise RuntimeError(
+			f"ARSO event request failed with HTTP {error.code}: {response_body}"
+		) from error
 
 
 
 if __name__ == "__main__":
-	# print(send_event())
-	print(get_measurement_sites())
-
-
+	print(send_event(api="dogodekPosegSprememba", payload=event))
+	# print(get_measurement_sites(api="readEvMerilnoMestoSeznam", change_timestamp="2026-10-07T12:00:00.000"))
 
